@@ -1,0 +1,30 @@
+package com.hali.openhangout;
+
+import com.hali.JwTokenHelper;
+
+import io.jsonwebtoken.Jwts;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
+
+
+@Path("/")
+public class HomeApiService {
+
+	@POST
+	@Path(value = "authenticatelseion_service")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response authenticationService(@QueryParam("username") String userName, @QueryParam("password") String password) {
+		if(userName.isEmpty())
+			return Response.status(400, "username empty").build();
+		if (password.isEmpty())
+			return Response.status(400,"password empty").build();
+		
+		return Response.ok(JwTokenHelper.issuePK(userName,password)).build();
+	}
+	
+}

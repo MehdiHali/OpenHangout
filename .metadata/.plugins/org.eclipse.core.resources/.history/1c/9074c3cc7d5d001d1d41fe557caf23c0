@@ -1,0 +1,120 @@
+package com.hali.openhangout.user;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.mindrot.jbcrypt.BCrypt;
+
+import com.hali.util.DaoHelper;
+
+public class UserService {
+	
+	/**
+	 * fetch a user from the database
+	 * @param username
+	 * @return
+	 */
+	public static User find(String username) throws SQLException {
+		return UserDao.find(username);
+	}
+	
+
+	/**
+	 * fetch all the users from the databse
+	 * @return users : set of users
+	 */
+	public Set<User> findAll() {
+		Set<User> users = new HashSet<User>();
+		
+		return users;
+	}
+	
+	/**
+	 * saves a user in the database
+	 * @param user
+	 * @return
+	 */
+	public static boolean save(User user) {
+		return UserDao.save(user);
+	}
+	
+	/**
+	 * updates a user in the database
+	 * @return
+	 */
+	public boolean update(User user) {
+		boolean updated = false;
+		
+		
+		return updated;
+	}
+	
+	public static boolean logout(String token) {
+		Connection conn = DaoHelper.getDbConn();
+		try {
+			PreparedStatement st = conn.prepareStatement("update auth_tokens set expired = true where token=?");
+			st.setString(1, token);
+			int count = st.executeUpdate();
+			if(count <= 0) throw new Exception("SOMETHING WRONG");
+			System.out.println("LOGOUT SUCCESSFULL");
+		}catch(Exception e) {
+			System.out.println(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+	
+	public static User findByToken(String token) throws SQLException {
+		return UserDao.findByToken(token);
+	}
+	
+	
+	/**
+	 * deletes a user from the database
+	 * @param username
+	 * @return
+	 */
+	public boolean delete(String username) {
+		boolean deleted = false;
+		
+		return deleted;
+	}
+	
+	public static boolean isValidUser(User user) {
+		boolean isValid = false;
+		try {
+			User validUser = UserService.find(user.getUsername());
+			isValid = checkPass(user.getPassword(),validUser.getPassword());
+		}catch(SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		return isValid;
+	}
+	
+	public static boolean checkPass(String pass, String passHash) {
+		return BCrypt.checkpw(pass, passHash);
+	}
+	
+		private void validateToken(String token) throws Exception {
+		Connection conn = DaoHelper.getDbConn();
+			PreparedStatement st = conn.prepareStatement("select * from auth_tokens where token = ?");
+			st.setString(1, token);
+			ResultSet res = st.executeQuery();
+			if(!res.next()) throw new Exception("INVALID TOKEN");
+			else {
+				boolean isExpired = res.getBoolean(5);
+				if(isExpired) throw new Exception("TOKEN EXPIRED");
+			}
+	}
+		
+		private Response getUnauthorizedResponse(String msg) {
+		return Response.status(401, msg).build();
+	}
+	
+	
+}

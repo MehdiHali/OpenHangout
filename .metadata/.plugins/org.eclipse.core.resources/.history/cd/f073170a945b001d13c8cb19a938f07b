@@ -1,0 +1,27 @@
+package com.hali.util;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+
+public class DaoHelper {
+	
+		private static String url = "jdbc:mysql://localhost:3306/openhangout";
+		private static String user = "mehdi";
+		private static String password = "1234";
+		private static Connection conn = null;
+		
+	public static Connection getDbConn() {
+
+		
+		try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(url,user,password);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return conn;
+	}
+
+}

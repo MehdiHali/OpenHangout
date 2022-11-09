@@ -1,0 +1,71 @@
+package com.hali.openhangout.filter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import com.hali.util.DaoHelper;
+import jakarta.annotation.Priority;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
+@Secure // name binding for the filter to call it on specific resources
+@Provider  // used to extend the JAX-RS runtime
+@Priority(Priorities.AUTHENTICATION) // priority of execution of this filter
+public class JsonTokenFilter implements ContainerRequestFilter {
+
+	@Override
+	public void filter(ContainerRequestContext requestContext) throws IOException {
+		// TODO Auto-generated method stub
+		String privateKeyHeaderValue  = requestContext.getHeaderString("privateKey");
+		if(privateKeyHeaderValue == null || privateKeyHeaderValue.isEmpty())
+			throw new WebApplicationException(Response.status(401, "missing private key").build());
+		
+		System.out.println("runnig JsonTokenFilter");
+		System.out.println("privateKey: "+privateKeyHeaderValue);
+
+		
+		
+		try {
+//			JwTokenHelper.claimKey(privateKeyHeaderValue); // if the jwsString is not valid or expired it will throw an exception
+			validateToken(privateKeyHeaderValue);
+			System.out.println("TOKEN IS VALID");
+		}catch(Exception e) {
+			System.out.println("EXCEPTION THROWN"+e.getClass());
+				System.out.println(e.getMessage());
+				if(e instanceof SQLException) 
+				throw new WebApplicationException(getUnauthorizedResponse("INTERNAL SERVER ERROR"));
+				throw new WebApplicationException(getUnauthorizedResponse("UNAUTHORIZED"));
+		}
+	}
+	
+	private void validateToken(String token) throws Exception {
+		Connection conn = DaoHelper.getDbConn();
+			PreparedStatement st = conn.prepareStatement("select * from auth_tokens where token = ?");
+			st.setString(1, token);
+			ResultSet res = st.executeQuery();
+			if(!res.next()) throw new Exception("INVALID TOKEN");
+			else {
+				boolean isExpired = res.getBoolean(5);
+				if(isExpired) throw new Exception("TOKEN EXPIRED");
+			}
+	}
+		
+	
+	private void abortUnauthorizedWithMessage(ContainerRequestContext reqContext, String msg) {
+        reqContext.abortWith(Response.status(401, msg).build());
+	}
+	
+	private Response getUnauthorizedResponse(String msg) {
+		return Response.status(401, msg).build();
+	}
+
+	private Response getUnauthorizedResponse() {
+		return Response.status(401).build();
+	}
+
+}

@@ -1,0 +1,5 @@
+package com.hali.openhangout.filter;
+
+public class CORSFilter {
+
+}

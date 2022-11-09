@@ -1,0 +1,25 @@
+/openhangout-react-client/design.drawio
+/openhangout-react-client/node_modules
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/openhangout-react-client/.pnp
+/openhangout-react-client/.pnp.js
+
+# testing
+/openhangout-react-client/coverage
+
+# production
+/openhangout-react-client/build
+
+# misc
+/openhangout-react-client/.DS_Store
+/openhangout-react-client/.env.local
+/openhangout-react-client/.env.development.local
+/openhangout-react-client/.env.test.local
+/openhangout-react-client/.env.production.local
+
+/openhangout-react-client/npm-debug.log*
+/openhangout-react-client/yarn-debug.log*
+/openhangout-react-client/yarn-error.log*
+/openhangout/target

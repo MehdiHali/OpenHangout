@@ -1,0 +1,46 @@
+package com.hali.openhangout.filter;
+
+import java.io.IOException;
+
+import jakarta.annotation.Priority;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.ext.Provider;
+
+
+@Provider
+@Priority(Priorities.HEADER_DECORATOR)
+public class CorsFilter implements ContainerResponseFilter {
+	    
+
+	@Override
+	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
+			throws IOException {
+		System.out.println("RESPONSE CORS FILTER");
+		// TODO Auto-generated method stub
+//        final MultivaluedMap<String,Object> headers = responseContext.getHeaders();
+
+
+		HttpServletResponse resp = (HttpServletResponse) ServletResponse;
+        resp.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+        resp.addHeader("Access-Control-Allow-Credentials", "true");
+        resp.addHeader("Access-Control-Allow-Headers", "Authorization, privateKey, Origin, X-Requested-With, Content-Type");
+        resp.addHeader("Access-Control-Expose-Headers", "Location, Content-Disposition");
+        resp.add("Access-Control-Allow-Methods", "POST, PUT, GET, DELETE, HEAD, OPTIONS");
+        System.out.println(responseContext.getHeaders().toString());
+        
+            if (requestContext.getMethod().equals("OPTIONS")) {
+			  responseContext.setStatus(HttpServletResponse.SC_ACCEPTED);
+			  return;
+			}
+		
+	}
+
+	
+
+}

@@ -1,0 +1,53 @@
+package com.hali.helper;
+
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
+import io.jsonwebtoken.ClaimJwtException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+/**
+ * a singleton class that creates one secret_key at each runtime.
+ * @author mehdi
+ *
+ */
+public class JwTokenHelper {
+
+	private static JwTokenHelper instance = null;
+	private static SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+	
+	// this method is used to persist a secret key throughout runtime
+	public static JwTokenHelper getInstance() {
+		if(instance == null) instance = new JwTokenHelper(); 
+		return instance;
+	}
+		
+	public String issuePK(String username, String password) {
+		Date expiryDate = new Date(System.currentTimeMillis() + 36000);
+		System.out.println("expiry date : "+expiryDate);
+		return Jwts
+				.builder()
+				.setExpiration(expiryDate) // 1 minute expiration
+				.setSubject(username)
+				.setSubject(password)
+				.signWith(SECRET_KEY)
+				.compact();
+	}
+	
+	public static void claimKey(String jwsString) throws  ExpiredJwtException, ClaimJwtException {
+		Jwts
+		 .parserBuilder()
+		 .setSigningKey(SECRET_KEY)
+		 .build()
+		 // jws : Json Web Signatue
+		 .parseClaimsJws(jwsString);
+	}
+	
+	
+
+}

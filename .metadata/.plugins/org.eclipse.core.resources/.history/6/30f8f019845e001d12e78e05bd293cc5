@@ -1,0 +1,32 @@
+package com.hali.openhangout.chat.room;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.hali.util.DaoHelper;
+
+public class RoomDao {
+	
+	public static Room getRoom(int id) {
+		Room room = null;
+		Connection conn = DaoHelper.getDbConn();
+		try {
+			PreparedStatement stmt = conn.prepareStatement("select * from rooms where id = ?");
+			stmt.setInt(1, id);
+			ResultSet res = stmt.executeQuery();
+			res.next();
+			room = new Room();
+			room.setId(res.getInt(1));
+			room.setName(res.getString(1));
+		}catch(SQLException e) {
+			e.printStackTrace();;
+		}
+		return room;
+	}
+	
+
+}

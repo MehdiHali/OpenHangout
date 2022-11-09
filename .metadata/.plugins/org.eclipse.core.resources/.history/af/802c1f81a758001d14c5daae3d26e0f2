@@ -1,0 +1,11 @@
+package com.hali.openhangout;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import org.glassfish.jersey.server.ContainerRequest;
+
+public class JsonTokenFilter implements ContainerRequestFilter {
+	
+	public jakarta.ws.rs.container.ContainerRequestFilter filter() {
+		
+	}
+
+}

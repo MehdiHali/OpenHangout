@@ -1,0 +1,28 @@
+package com.hali.openhangout.message;
+
+import com.hali.openhangout.user.User;
+
+public class Message {
+	private User user;
+	private String content;
+	private String timestamp;
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user = user;
+	}
+	public String getContent() {
+		return content;
+	}
+	public void setContent(String content) {
+		this.content = content;
+	}
+	public String getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
+
+}

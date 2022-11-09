@@ -1,0 +1,19 @@
+package com.hali.openhangout;
+import org.glassfish.jersey.server.ContainerRequest;
+
+import jakarta.annotation.Priority;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
+@Priority(Priorities.AUTHENTICATION)
+public class JsonTokenFilter implements ContainerRequestFilter {
+	
+	@ovrride
+	public ContainerRequest filter(ContainerRequest request) {
+		return ;
+	}
+
+}

@@ -1,0 +1,21 @@
+package com.hali.openhangout.chat.session;
+
+import com.hali.openhangout.chat.room.Room;
+
+public class UserSession {
+	private int id;
+	private Room room;
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public Room getRoom() {
+		return room;
+	}
+	public void setRoom(Room room) {
+		this.room = room;
+	}
+
+}

@@ -1,0 +1,137 @@
+package com.hali.openhangout.chat;
+
+import java.util.Date;
+import java.util.Set;
+import com.hali.openhangout.chat.room.Room;
+import com.hali.openhangout.chat.room.RoomDao;
+import com.hali.openhangout.chat.session.UserSessionDao;
+import com.hali.openhangout.chat.session.UserSession;
+import com.hali.openhangout.message.Message;
+import com.hali.openhangout.user.User;
+import com.hali.openhangout.user.UserService;
+import com.hali.util.JsonEncoder;
+import java.io.IOException;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
+
+
+@ServerEndpoint( value = "/chat/{roomID}", encoders = JsonEncoder.class )
+public class ChatServer {
+	private Session session;
+	private boolean authenticated = false;
+	private User user;
+	private Room room;
+	
+	@OnOpen
+	public void open(Session session, @PathParam("roomID") int roomID) {
+		System.out.println("onOpen");
+		
+
+		Room userRoom = RoomDao.find(roomID);
+		try {
+			if(userRoom == null) this.session.close();
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+		this.room = userRoom;
+
+		// never timout because of inactivity
+		session.setMaxIdleTimeout(-1);
+		this.session = session;
+		
+		System.out.println("session "+session);
+	}
+	
+	@OnClose
+	public void close() {
+		/** 
+		 * @TODO remove the session from sessions table
+		 */
+		UserSessionDao.delete(session.getId());
+		this.session = null;
+		this.authenticated = false;
+		System.out.println("closed");
+	}
+	
+	@OnMessage
+	public void handleMessage(String msg) {
+		System.out.println("message: "+msg);
+		System.out.println("Authenticated is "+authenticated);
+
+		/**
+		 * @TODO insert the session into sessions table with room name
+		 * 
+		 */
+		// if the user is not authenticated 
+		if(!authenticated) {
+			String token = msg;
+			try {
+				UserService.validateToken(token);
+				System.out.println("WS::USER AUTHENTICATED SUCCESS");
+				this.authenticated = true;
+				this.user = UserService.findByToken(token);
+
+				// notify other loged in users
+				Message notifyMsg = new Message();
+				notifyMsg.setContent(user.getUsername()+" is Connected. Say Hi! to "+user.getUsername());
+				notifyMsg.setAuthor("SERVER");
+				notifyMsg.setTimestamp(new Date().toString());
+				// change the Session class name to UserSession
+				UserSession userSession = new UserSession();
+				System.out.println("USER SESSION ID IS "+this.session.getId());
+				userSession.setId(this.session.getId());
+				userSession.setRoom(this.room);
+				UserSessionDao.create(userSession);
+				broadCast(notifyMsg, this.room.getId());
+//				this.session.getAsyncRemote().sendText("SERVER:: Welcome !");
+			}catch(Exception e) {
+					System.out.println("UNAUTHENTICATED USER:: CLOSING WEBSOCKET");
+				try {
+					this.authenticated = false;
+					this.session.close();
+				}catch(Exception ee) {
+					ee.printStackTrace();
+				}
+			}
+		}
+		else // if the user is authenticated
+		{
+			System.out.println("WS:: USER_BEEN_AUTH");
+			Message msgResp = new Message();
+			msgResp.setContent(msg);
+			msgResp.setAuthor(user.getUsername());
+			msgResp.setTimestamp(new Date().toString());
+			System.out.println(msgResp.toString());
+			
+			this.session.getAsyncRemote().sendObject(msgResp);
+			broadCast(msgResp, this.room.getId());
+		}
+	}
+	
+	
+	
+	private void broadCast(Message msg, String roomID) {
+			/** 
+			 * @TODO instead of get open sessions write a function that gets
+			 * the sessions from the database that have 
+			 * the room in the path
+			 */
+			Set<Integer> thisRoomSessions = UserSessionDao.getSessionsIdByRoom(roomID);
+			Set<Session> openSessions = session.getOpenSessions();
+			openSessions.forEach((Session sess)->{
+			if(thisRoomSessions.contains(sess.getId())&& !(sess.getAsyncRemote().equals(this.session.getAsyncRemote())))
+			{
+				System.out.println("Sending to sessio"+sess);
+				System.out.println("from sessio"+this.session);
+				if(sess.equals(this.session))
+					System.out.println("SOMETHING IS WRONG");
+				sess.getAsyncRemote().sendObject(msg);
+			}
+		});
+	}
+}
+

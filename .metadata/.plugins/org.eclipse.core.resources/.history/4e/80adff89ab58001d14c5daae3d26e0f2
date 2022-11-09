@@ -1,0 +1,12 @@
+package com.hali.openhangout;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+
+public class JsonTokenFilter implements ContainerRequestFilter {
+	
+	public void filter( ContainerRequestContext context) {
+
+		return ;
+	}
+
+}

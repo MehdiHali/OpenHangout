@@ -1,0 +1,7 @@
+package com.hali.openhangout.chat.session;
+
+public class Session {
+	private int id;
+	private Room room;
+
+}

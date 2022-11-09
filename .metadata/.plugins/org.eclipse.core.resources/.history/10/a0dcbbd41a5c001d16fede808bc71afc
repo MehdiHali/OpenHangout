@@ -1,0 +1,81 @@
+package com.hali.openhangout.filter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.Statement;
+
+import org.eclipse.jetty.http.HttpHeader;
+import org.glassfish.jersey.inject.hk2.RequestContext;
+
+import com.hali.util.DaoHelper;
+import com.hali.util.JwTokenHelper;
+
+import jakarta.annotation.Priority;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.ext.Provider;
+import io.jsonwebtoken.ClaimJwtException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+
+@Secure // name binding for the filter to call it on specific resources
+@Provider  // used to extend the JAX-RS runtime
+@Priority(Priorities.AUTHENTICATION) // priority of execution of this filter
+public class JsonTokenFilter implements ContainerRequestFilter {
+
+	@Override
+	public void filter(ContainerRequestContext requestContext) throws IOException {
+		// TODO Auto-generated method stub
+		String privateKeyHeaderValue  = requestContext.getHeaderString("privateKey");
+		if(privateKeyHeaderValue == null || privateKeyHeaderValue.isEmpty())
+			throw new WebApplicationException(Response.status(401, "missing private key").build());
+		
+		System.out.println("runnig JsonTokenFilter");
+		System.out.println("privateKey: "+privateKeyHeaderValue);
+
+		
+		
+		try {
+//			JwTokenHelper.claimKey(privateKeyHeaderValue); // if the jwsString is not valid or expired it will throw an exception
+			validateToken(privateKeyHeaderValue);
+			System.out.println("TOKEN IS VALID");
+		}catch(Exception e) {
+			System.out.println("EXCEPTION THROWN"+e.getClass());
+			if(e instanceof ExpiredJwtException) {
+				System.out.println("TOKEN EXPIRED");
+				throw new WebApplicationException(getUnauthorizedResponse("UNAUTHORIZED: TOKEN EXPIRED"));
+			}
+			else {
+				System.out.println("TOKEN INVALID");
+				throw new WebApplicationException(getUnauthorizedResponse("UNAUTHORIZED: TOKEN INVALID"));
+			}
+		}
+	}
+	
+	public void validateToken() {
+		Connection conn = DaoHelper.getDbConn();
+		try {
+			Statement st = conn.createStatement();
+			String token;
+		}catch(Exception e) {
+			
+		}
+	}
+		
+	
+	public void abortUnauthorizedWithMessage(ContainerRequestContext reqContext, String msg) {
+        reqContext.abortWith(Response.status(401, msg).build());
+	}
+	
+	public Response getUnauthorizedResponse(String msg) {
+		return Response.status(401, msg).build();
+	}
+
+	public Response getUnauthorizedResponse() {
+		return Response.status(401).build();
+	}
+
+}

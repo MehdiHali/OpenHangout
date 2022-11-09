@@ -1,0 +1,124 @@
+package com.hali.openhangout.service;
+
+
+import java.io.InputStream;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.eclipse.jetty.util.CountingCallback;
+
+import com.hali.JwTokenHelper;
+import com.hali.openhangout.filter.Secure;
+import com.hali.openhangout.model.User;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import java.sql.*;
+
+
+@Path("/")
+public class HomeApiService {
+	
+	Class<HomeApiService> homeapi;
+
+	@POST
+	@Path(value = "auth")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response authenticationService(InputStream credentials) {
+		System.out.println("A new POST Request");
+		User newUser = new User();
+		String token="";
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			newUser = mapper.readValue(credentials, User.class);
+			if(newUser.getUsername().isEmpty())
+				return Response.status(400, "username empty").build();
+			if (newUser.getPassword().isEmpty())
+				return Response.status(400,"password empty").build();
+			
+			System.out.println(newUser.getUsername()+" "+newUser.getPassword());
+			
+			token = authenticate(newUser);
+ 
+			// presiste that the user is been authenticated
+						
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return Response.ok(token).build();
+	}
+	
+	
+	@POST
+	@Path("/create_user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createUSer(InputStream userInputStream) {
+		ObjectMapper mapper = new ObjectMapper();
+		User newUser = new User();
+		newUser = mapper.readValue(userInputStream, User.class);
+		return Response.notModified().build();
+	}
+	
+	/**
+	 * authenticate the user credentials and persist the authentication
+	 * @param user
+	 * @return
+	 */
+	public String authenticate(User user)	{
+		Connection conn = getDbConn();
+		String token = JwTokenHelper.getInstance().issuePK(user.getUsername(),user.getPassword());
+		String query = "insert into users values (?,?)";
+		try(PreparedStatement stmt = conn.prepareStatement(query)){
+			stmt.setString(1, user.getUsername());
+			stmt.setString(2, user.getPassword());
+			int countInserted = stmt.executeUpdate();
+			if(countInserted > 0 ) System.out.println("Rows inserted successfuly");
+		}catch(SQLException e) {
+			System.out.println("ERROR :: PREPARED STATEMENT ERROR");
+			e.printStackTrace();
+		}
+		
+		System.out.println("INSERTION DONNE");
+		return token;
+	}
+	
+	
+	/**
+	 * Creates a connection with the database
+	 * @return
+	 */
+	public Connection getDbConn() {
+		String url = "jdbc:mysql://localhost:3306/openhangout";
+		String user = "mehdi";
+		String password = "1234";
+		Connection conn = null;
+		
+		try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(url,user,password);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return conn;
+	}
+	
+	
+	@Secure
+	@GET
+	@Path("/secret")
+	@Produces("text/plain")
+	public String getData() {
+		
+		return "this is some secret data";
+	}
+	
+	
+	
+}

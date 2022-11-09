@@ -1,0 +1,118 @@
+package com.hali.openhangout.user;
+
+import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.hali.util.DaoHelper;
+
+public class UserDao {
+	
+	/**
+	 * fetch a user from the database
+	 * @param username
+	 * @return
+	 */
+	public static User find(String username) throws SQLException {
+		User user = new User();
+		Connection conn = DaoHelper.getDbConn();
+			PreparedStatement st = conn.prepareStatement("select * from users where username=?");
+			st.setString(1, username);
+			ResultSet res = st.executeQuery();
+			// move the pointer to the first row
+			res.next();
+			user.setUsername(res.getString(1));
+			user.setPassword(res.getString(2));
+
+		return user;
+	}
+	
+
+	/**
+	 * fetch all the users from the databse
+	 * @return users : set of users
+	 */
+	public Set<User> findAll() {
+		Set<User> users = new HashSet<User>();
+		
+		return users;
+	}
+	
+	/**
+	 * saves a user in the database
+	 * @param user
+	 * @return
+	 */
+	public static boolean save(User user) {
+		if(user.getUsername().isEmpty() || user.getPassword().isEmpty())
+		{
+			System.out.println("USER NOT VALID:: username or pass is empty");
+			return false;
+		}
+		boolean saved = false;
+		String query = "insert into users(username,password) values (?,?)";
+		Connection conn = DaoHelper.getDbConn();
+		PreparedStatement st = null;
+		try {
+			st = conn.prepareStatement(query);
+			String hashed_pass = getHAshedPassword(user.getPassword());
+			st.setString(1, user.getUsername());
+			st.setString(2, hashed_pass);
+			st.executeUpdate();
+			System.out.println("USER INSERTED SUCCESSFULY");
+			saved = true;
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if(st != null)
+				st.close();
+				if(conn != null)
+					conn.close();
+			}catch(SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return saved;
+	}
+	
+	public String getHAshedPassword(String pass) {
+		String hash = "";
+		SecureRandom rand = new SecureRandom();
+		byte[] salt = new byte[16];
+		rand.nextBytes(salt);
+		return hash;
+	}
+	
+	/**
+	 * updates a user in the database
+	 * @return
+	 */
+	public boolean update(User user) {
+		boolean updated = false;
+		
+		
+		
+		return updated;
+	}
+	
+	
+	/**
+	 * deletes a user from the database
+	 * @param username
+	 * @return
+	 */
+	public boolean delete(String username) {
+		boolean deleted = false;
+		
+		return deleted;
+	}
+	
+
+}

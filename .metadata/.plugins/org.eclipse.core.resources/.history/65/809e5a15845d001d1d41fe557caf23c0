@@ -1,0 +1,5 @@
+package com.hali.openhangout.message;
+
+public class Message {
+
+}

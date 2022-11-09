@@ -1,0 +1,5 @@
+package com.hali.openhangout.chat.session;
+
+public class Session {
+
+}

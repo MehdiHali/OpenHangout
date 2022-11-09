@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply text-white
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.input{
+  @apply outline-none p-4 border-l-4  border-blue-400 rounded-sm bg-gray-200 bg-opacity-20 text-white focus:bg-opacity-40
+}
+
+.content{
+  background-image: url("./assets/bg-2.jpg");
+}
+
+.btn {
+@apply  grid content-center h-fit p-1 cursor-pointer bg-gray-200 px-6 text-gray-200 bg-opacity-20 border-blue-400 hover:bg-opacity-40 rounded-sm  w-fit  focus:outline-none 
+}
+
+
+/* width */
+.scroller::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+.scroller::-webkit-scrollbar-track {
+  @apply  bg-transparent
+}
+
+/* Handle */
+.scroller::-webkit-scrollbar-thumb {
+  @apply bg-gray-800
+}
+
+/* Handle on hover */
+.scroller::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-800
+} 
+
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+
+.no-scrollbar{
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

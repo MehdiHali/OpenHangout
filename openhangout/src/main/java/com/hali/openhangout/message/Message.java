@@ -1,0 +1,33 @@
+package com.hali.openhangout.message;
+
+import com.hali.openhangout.user.User;
+
+public class Message {
+	private String author;
+	private String content;
+	private String timestamp;
+	public String getAuthor() {
+		return author;
+	}
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+	public String getContent() {
+		return content;
+	}
+	public void setContent(String content) {
+		this.content = content;
+	}
+	public String getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
+	@Override
+	public String toString() {
+		return "Message [author=" + author + ", content=" + content + ", timestamp=" + timestamp + "]";
+	}
+	
+
+}

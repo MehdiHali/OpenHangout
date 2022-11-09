@@ -1,0 +1,219 @@
+package com.hali.openhangout.service;
+
+
+import java.io.InputStream;
+
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import com.hali.openhangout.chat.room.Room;
+import com.hali.openhangout.chat.room.RoomDao;
+import com.hali.openhangout.filter.Secure;
+import com.hali.openhangout.user.User;
+import com.hali.openhangout.user.UserService;
+import com.hali.util.DaoHelper;
+import com.hali.util.JwTokenHelper;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+
+import java.sql.*;
+import java.util.Set;
+
+
+@Path("/")
+public class HomeApiService {
+	
+	Class<HomeApiService> homeapi;
+
+	@POST
+	@Path("/public")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response hello() {
+		return Response.ok("hello").build();
+	}
+	
+	@POST
+	@Path(value = "auth")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response authenticationService(InputStream credentials) {
+		System.out.println("A new POST Request");
+		User user = new User();
+		String token="";
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			user = mapper.readValue(credentials, User.class);
+			if(user.getUsername().isEmpty())
+				return Response.status(400, "username empty").build();
+			if (user.getPassword().isEmpty())
+				return Response.status(400,"password empty").build();
+			
+			System.out.println(user.getUsername()+" "+user.getPassword());
+			
+			if(!UserService.isValidUser(user))
+				return Response.status(Status.FORBIDDEN).build();
+			else
+			token = authenticate(user);
+			System.out.println("AUTH DONNE");
+ 
+			// presiste that the user is been authenticated
+						
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return Response.ok(token).build();
+	}
+	
+	
+	
+	
+	
+	/**
+	 * authenticate the user credentials and persist the authentication
+	 * @param user
+	 * @return
+	 */
+	public String authenticate(User user)	{
+		Connection conn = DaoHelper.getDbConn();
+		String token = JwTokenHelper.getInstance().issuePK(user.getUsername(),user.getPassword());
+		System.out.println("GENERATED TOKEN "+token);
+		String query = "insert into auth_tokens(username,token,expired) values (?,?,?)";
+		try(PreparedStatement stmt = conn.prepareStatement(query)){
+			stmt.setString(1, user.getUsername());
+			stmt.setString(2, token);
+			stmt.setBoolean(3, false);
+			int countInserted = stmt.executeUpdate();
+			if(countInserted > 0 ) System.out.println("SESSION SAVED");
+		}catch(SQLException e) {
+			System.out.println("ERROR :: PREPARED STATEMENT ERROR");
+			e.printStackTrace();
+		}
+		
+		return token;
+	}
+	
+	
+	/**
+	 * Creates a connection with the database
+	 * @return
+	 */
+	@Secure
+	@GET
+	@Path("/secret")
+	@Produces("text/plain")
+	public String getData() {
+		
+		return "this is some secret data";
+	}
+	
+	@GET
+	@Path("/users/{username}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUser(@PathParam("username") String username) {
+		System.out.println("GET /username: "+username);
+		User user = new User();
+		try {
+			user = UserService.find(username);
+		}catch(SQLException e) {
+			System.out.println(e.getSQLState());
+			System.out.println(e.getMessage());
+			return Response.status(404, "USER NOT FOUND").build();
+		}
+		
+		return Response.ok(user.getUsername()).build();
+	}
+	
+	@POST
+	@Path("/users/user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createUser(InputStream userBytes) {
+		User newUser = new User();
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			newUser = mapper.readValue(userBytes, User.class);
+			if(!UserService.save(newUser))
+				throw new Exception("ERROR INSERTING THE USER");
+			System.out.println("USER CREATED SUCCESSFULLY");
+		}catch(JsonParseException e) {
+			e.printStackTrace();
+			return Response.status(Status.BAD_REQUEST.getStatusCode(), "USER DATA INVALID").build();
+		}catch(JsonMappingException e) {
+			return Response.status(Status.BAD_REQUEST.getStatusCode(), "USER DATA INVALID").build();
+		}catch(Exception e) {
+			return Response.serverError().build();
+		}
+		
+		return Response.status(Status.CREATED.getStatusCode(),"USER CREATED SUCCESSFULLY").entity(newUser).build();
+		
+	}
+	
+	@GET
+	@Secure
+	@Path("/users/user")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUser(ContainerRequestContext req) {
+		String pk = req.getHeaderString("privateKey");
+		User user = null;
+		try {
+			 user = UserService.findByToken(pk);
+		}catch(SQLException e) {
+			System.out.println("SQLEXCEPTION "+e.getMessage());
+			e.printStackTrace();
+			return Response.status(Status.NOT_FOUND.getStatusCode()).build();
+		}
+		
+		return Response.ok(user.getUsername()).build();
+		
+	}
+	
+	
+	@Secure
+	@POST
+	@Path("/logout")
+	public Response logout(ContainerRequestContext req) {
+		String token = req.getHeaderString("privateKey");
+		if(UserService.logout(token))
+			return Response.ok().build();
+		else return Response.status(Status.INTERNAL_SERVER_ERROR.getStatusCode()).build();
+	}
+	
+	@Secure
+	@POST
+	@Path("/rooms/room")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createRoom(InputStream roomBytes) {
+		Room room = null;
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			room = mapper.readValue(roomBytes, Room.class);
+			if( room.getName() == null || room.getName().isEmpty()) throw new Exception("A ROOM FIELD IS EMPTY OR NULL");
+		}catch(Exception e) {
+			e.printStackTrace();
+			return Response.status(Status.BAD_REQUEST).build();
+		}
+		return Response.status(Status.CREATED.getStatusCode()).entity(room).build();
+	}
+	
+	@GET
+	@Path("/rooms")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getRooms() {
+		Set<Room> rooms = RoomDao.findAll();
+		if(rooms == null) return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+
+		return Response.status(Status.CREATED.getStatusCode()).entity(rooms).build();
+	}
+	
+	
+}

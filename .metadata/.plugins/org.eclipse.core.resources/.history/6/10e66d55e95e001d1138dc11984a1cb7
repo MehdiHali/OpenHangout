@@ -1,0 +1,48 @@
+package com.hali.util;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DaoHelper {
+	
+		private static String url = "jdbc:mysql://localhost:3306/openhangout";
+		private static String user = "mehdi";
+		private static String password = "1234";
+		
+	public static Connection getDbConn_local() {
+		Connection conn = null;
+		try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+			conn = DriverManager.getConnection(url,user,password);
+		}
+		catch(Exception e) {
+			System.out.println("DB DOWN");
+		}
+		return conn;
+	}
+	
+	private static Connection getDbConn(){
+		URI jdbUri = null;
+		Connection conn = null;
+		try {
+			jdbUri = new URI(System.getenv("JAWSDB_URL"));
+		}catch(URISyntaxException e) {
+			e.printStackTrace();
+		}
+			String username = jdbUri.getUserInfo().split(":")[0];
+			String password = jdbUri.getUserInfo().split(":")[1];
+			String port = String.valueOf(jdbUri.getPort());
+			String jdbUrl = "jdbc:mysql://" + jdbUri.getHost() + ":" + port + jdbUri.getPath();
+		try {
+			conn =  DriverManager.getConnection(jdbUrl, username, password);
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+	    return conn;
+	}
+
+
+}

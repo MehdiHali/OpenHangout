@@ -1,0 +1,28 @@
+package com.hali.openhangout.chat.session;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import com.hali.util.DaoHelper;
+
+public class SessionDao {
+	
+	public static boolean create(Session session) {
+		boolean created = false;
+		Connection conn = DaoHelper.getDbConn();
+		try {
+			PreparedStatement stmt = conn.prepareStatement("insert into sessions(id, roomID) values (?,?)");
+			stmt.setInt(1, session.getId());
+			stmt.setInt(2, session.getRoom().getId());
+			int insertionCount = stmt.executeUpdate();
+			if(insertionCount > 0) created = true;
+		}catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+
+		return created;
+	}
+
+}

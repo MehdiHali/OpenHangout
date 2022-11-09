@@ -1,0 +1,38 @@
+package com.hali.util;
+import jakarta.json.JsonObject;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Encoder;
+import jakarta.websocket.EndpointConfig;
+
+import org.codehaus.jackson.map.ObjectMapper;
+
+import java.io.IOException;
+
+import org.codehaus.jackson.JsonProcessingException;
+
+
+public class JsonEncoder implements Encoder.Text<JsonObject>{
+
+    @Override//Initialization does nothing
+    public void init(EndpointConfig config) {}
+
+	@Override//Encoding process(Object → JSON)
+	public String encode(JsonObject obj) throws EncodeException {
+		System.out.println("ENCODING TO JSON");
+		ObjectMapper mapper = new ObjectMapper();
+		String json = "";
+		try {
+			json = mapper.writeValueAsString(obj);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+		return json;
+	}
+
+    @Override//Do nothing to destroy
+    public void destroy() {}
+
+
+}

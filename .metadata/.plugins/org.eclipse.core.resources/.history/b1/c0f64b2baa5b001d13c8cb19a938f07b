@@ -1,0 +1,68 @@
+package com.hali.openhangout.user;
+
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
+public class UserService {
+	
+	/**
+	 * fetch a user from the database
+	 * @param username
+	 * @return
+	 */
+	public static User find(String username) throws SQLException {
+		return UserDao.find(username);
+	}
+	
+
+	/**
+	 * fetch all the users from the databse
+	 * @return users : set of users
+	 */
+	public Set<User> findAll() {
+		Set<User> users = new HashSet<User>();
+		
+		return users;
+	}
+	
+	/**
+	 * saves a user in the database
+	 * @param user
+	 * @return
+	 */
+	public static boolean save(User user) {
+		return UserDao.save(user);
+	}
+	
+	/**
+	 * updates a user in the database
+	 * @return
+	 */
+	public boolean update(User user) {
+		boolean updated = false;
+		
+		
+		return updated;
+	}
+	
+	
+	/**
+	 * deletes a user from the database
+	 * @param username
+	 * @return
+	 */
+	public boolean delete(String username) {
+		boolean deleted = false;
+		
+		return deleted;
+	}
+	
+	public static boolean validateUser(User user) {
+		boolean isValid = false;
+		
+		return isValid;
+	}
+	
+	
+}

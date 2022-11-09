@@ -1,0 +1,97 @@
+package com.hali.openhangout.user;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.mindrot.jbcrypt.BCrypt;
+
+import com.hali.util.DaoHelper;
+
+public class UserService {
+	
+	/**
+	 * fetch a user from the database
+	 * @param username
+	 * @return
+	 */
+	public static User find(String username) throws SQLException {
+		return UserDao.find(username);
+	}
+	
+
+	/**
+	 * fetch all the users from the databse
+	 * @return users : set of users
+	 */
+	public Set<User> findAll() {
+		Set<User> users = new HashSet<User>();
+		
+		return users;
+	}
+	
+	/**
+	 * saves a user in the database
+	 * @param user
+	 * @return
+	 */
+	public static boolean save(User user) {
+		return UserDao.save(user);
+	}
+	
+	/**
+	 * updates a user in the database
+	 * @return
+	 */
+	public boolean update(User user) {
+		boolean updated = false;
+		
+		
+		return updated;
+	}
+	
+	public boolean logout(String username) {
+		Connection conn = DaoHelper.getDbConn();
+		try {
+			PreparedStatement st = conn.prepareStatement("update set expired = true where username = ?");
+			st.setString(1, username);
+			st.executeUpdate();
+		}catch(SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	
+	/**
+	 * deletes a user from the database
+	 * @param username
+	 * @return
+	 */
+	public boolean delete(String username) {
+		boolean deleted = false;
+		
+		return deleted;
+	}
+	
+	public static boolean isValidUser(User user) {
+		boolean isValid = false;
+		try {
+			User validUser = UserService.find(user.getUsername());
+			isValid = checkPass(user.getPassword(),validUser.getPassword());
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return isValid;
+	}
+	
+	public static boolean checkPass(String pass, String passHash) {
+		return BCrypt.checkpw(pass, passHash);
+	}
+	
+	
+}
