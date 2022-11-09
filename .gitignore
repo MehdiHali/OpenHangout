@@ -23,3 +23,5 @@
 /openhangout-react-client/yarn-debug.log*
 /openhangout-react-client/yarn-error.log*
 /openhangout/target
+openhangout/.env
+/openhangout/.env
