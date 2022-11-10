@@ -16,6 +16,28 @@ Realtime multi client chat application with a JakartaEE/JEE backend and a ReactJ
 This application is meant for demonstration purposes.
 this application demonstrates how we can use JavaEE to build modern service oriented applications.
 
+## How to run the application
+### run the backend
+```shell
+cd openhangout
+```
+```shell
+mvn clean package
+```
+```shell
+mvn jetty:run
+```
+### run the frontend
+```shell
+cd openhangout-react-client
+```
+```shell
+npm i
+```
+```shell
+npm start
+```
+
 
 ## Application Components
 - **Jersey**: a JAX-RS implementation for building REST APIs.
