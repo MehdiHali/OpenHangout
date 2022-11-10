@@ -69,20 +69,27 @@ const axiosUnAuth = axios.create({
     function signup(username: string, password: string){
         let cred = {username:username,password:password};
         let credJson: string = JSON.stringify(cred);
+        console.log("credentials json",credJson);
+        
         // send req to /auth then store private key in the storage
-        axiosUnAuth.post('/auth',credJson,{headers:{"content-type":"application/json"}})
+        axiosUnAuth.post("users/user",credJson,{
+            headers:{"Content-Type": "application/json"}
+        })
         .then((res: any)=>{
-            console.log("LOGIN SUCCESS",res.data);
-            localStorage.setItem('privateKey',res.data)
-            // redirect to the chat
-            // the chat should call the use auth to get the user
+            let user: user = res.data;
+            console.log("SIGNUP SUCCESS",user);
+            login(username,password);
         })
         .catch((err: any)=>{
-            console.log("LOGGIN ERR",err.data);
-            setErr(err.data);
+            console.log("LOGGIN ERR",err.response.data);
+            if(err.response.status < 500)
+            setErr(["Wrong inputs, username must be unique."]);
+            else
+            setErr(["Something Went Wrong"])
+
+            setUser(null);
         })
     }
-
     function getUser(){
         console.log("making request with key ",PK);
         

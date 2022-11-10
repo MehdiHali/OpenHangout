@@ -2,12 +2,13 @@
 import { Navigate, redirect, Route, Router, RouterProvider, Routes, useNavigate } from 'react-router';
 import './App.css';
 import SendIcon from './assets/Send.png'
-import { Dispatch, ReactNode, SetStateAction, useEffect, useState } from 'react';
+import React, { Dispatch, ReactNode, SetStateAction, useEffect, useState } from 'react';
 import useAuth from './hooks/auth';
 import LoginPage from './LoginPage';
 import {user, room} from './types';
 import { Link } from 'react-router-dom';
 import { HOST, WS_URL } from './config';
+import { json } from 'stream/consumers';
 
 
 /**
@@ -17,16 +18,16 @@ import { HOST, WS_URL } from './config';
 
 
 
-let Room = ({room,onClick, currRoom}: {room: room, onClick: ()=>void, currRoom: room})=>{
+let Room = ({room,onClick, currRoom, lastMessage}: {room: room, onClick: ()=>void, currRoom: room, lastMessage:string})=>{
   return (
           <div onClick={onClick} className={"bg-gray-200 p-4 bg-opacity-20 hover:border-l-4 border-blue-400 text-white text-start hover:bg-opacity-40 cursor-pointer"+" "+((currRoom?.id===room?.id)?"bg-opacity-40":"")}>
             <div className='text-lg font-bold'>{room?.name??""}</div>
-            <small className='text-xs'>this is a message</small>
+            {/* <small className='text-xs'>{lastMessage}</small> */}
           </div>
   )
 }
 
-let Message = ({children,timestamp,author,end, id}: {children: ReactNode, timestamp: string, author: string, end?: boolean, id: number})=>{
+let Message = ({children,timestamp,author,end, id, profilePic}: {children: ReactNode, timestamp: string, author: string, end?: boolean, id: number, profilePic: string | React.ReactElement})=>{
   return (
     <>
     { 
@@ -34,7 +35,7 @@ let Message = ({children,timestamp,author,end, id}: {children: ReactNode, timest
     :
 
           <div  id={"msg_"+id} className={'flex  items-center m-4  '+" "+(end&&"justify-end")}>
-            {!end && <div className='rounded-full bg-white bg-opacity-20 w-14 h-14 grid content-center text-2xl text-white m-4'>{author.charAt(0).toUpperCase()}</div>}
+            {!end && <div className='rounded-full bg-white bg-opacity-20 w-14 h-14 grid content-center text-2xl text-white m-4'>{profilePic}</div>}
 
             <div className='px-4 p-2 text-white text-start'>
               <div className='bg-white bg-opacity-20 w-fit px-2 rounded-r-md rounded-tl-md'>{author}</div>
@@ -64,6 +65,8 @@ let ChatApp = ({user,logout,PK, axiosAuth}:{user: user,logout: ()=>void,PK: stri
   let [ws,setWebSocket]: [WebSocket|null,Dispatch<SetStateAction<WebSocket|null>>] = useState(null as WebSocket|null);
   let [messages,setMessages]: [message[], Dispatch<SetStateAction<message[]>>] = useState([] as message[]);
   let [currRoom,setCurrRoom]: [room, Dispatch<SetStateAction<room>>] = useState(null as room);
+  let [filter,setFilter]: [string, Dispatch<SetStateAction<string>>] = useState("");
+  let [newRoomName,setNewRoomName]: [string, Dispatch<SetStateAction<string>>] = useState("");
 
 
   // whenever a user is set (ie authenticated)
@@ -180,6 +183,28 @@ let ChatApp = ({user,logout,PK, axiosAuth}:{user: user,logout: ()=>void,PK: stri
     
   }
 
+  function handleAddRoom(ev: any): void{
+    ev.preventDefault();
+    let newRoom = {id: "0", name: newRoomName};
+    console.log("room",newRoom);
+    let newRoomJson = JSON.stringify(newRoom);
+    console.log("room json", newRoom);
+    
+    axiosAuth.post("rooms/room",
+    newRoom,
+    {
+      headers:{
+      "Content-type": "application/json"
+    }}
+    )
+    .then((res:any)=>{
+      console.log("ROOM CREATED");
+      
+    })
+    .catch((err:any)=>{
+      console.log("ROOM NOT CREATED");
+    })
+  }
 
   return (
 
@@ -192,18 +217,24 @@ let ChatApp = ({user,logout,PK, axiosAuth}:{user: user,logout: ()=>void,PK: stri
 
       <section className=' flex flex-col justify-between w-[20%] h-full bg-gray-400 bg-opacity-20'>
         <div className=''>
-        <input placeholder='filter' className='input mb-2 w-full ' />
+        <input onChange={(ev)=>{setFilter(ev.target.value)}} value={filter} placeholder='filter' className='input mb-2 w-full ' />
         <div className=' text-start text-sm p-1'>Rooms</div>
         {
-          rooms.map(room=><Room currRoom={currRoom} onClick={()=>setCurrRoom(room)} key={room?.id} room={room} />)
+          rooms.map(room=>{
+              if(room?.name.toLowerCase().includes(filter))
+              return <Room lastMessage={messages[messages.length - 1]?.content??"--"} currRoom={currRoom} onClick={()=>setCurrRoom(room)} key={room?.id} room={room} />
+              }
+            )
         }
         </div>
-        <div className='text-4xl text-center bg-gray-200 p-2 bg-opacity-20 text-white hover:bg-opacity-40 cursor-pointer'>+</div>
+        <form onSubmit={handleAddRoom}>
+          <input value={newRoomName} onChange={(ev)=>{setNewRoomName(ev.target.value)}} placeholder={"+"} className='text-4xl text-center bg-gray-200 p-2 bg-opacity-20 text-white hover:bg-opacity-40 cursor-pointer w-full' />
+        </form>
       </section>
       <div className='w-full h-full flex flex-col justify-between'>
         <header className='w-full flex items-center justify-end p-2 border-b-2 border-blue-400'>
-          <div className=' ml-0 mr-auto p-3' >Welcome <strong className='font-bold'>{user?.username} </strong> </div>
-          <div className='btn mr-0 ml-auto' onClick={logout}>Logout</div>
+          <div className=' ml-0 mr-auto p-3' >Welcome <strong className='font-bold'>{(user?.username.charAt(0).toUpperCase()??"")+ user?.username.substring(1)} </strong> </div>
+          <div className=' btn mr-0 ml-auto' onClick={logout}>Logout</div>
         </header>
         <section className='overflow-y-scroll  scroller '>
 
@@ -215,7 +246,10 @@ let ChatApp = ({user,logout,PK, axiosAuth}:{user: user,logout: ()=>void,PK: stri
                 key={i} 
                 id={i} 
                 end={(msg.author!==user?.username)} 
-                timestamp={msg.timestamp??""} author={(msg.author===user?.username)?"you":msg.author}>
+                timestamp={msg.timestamp??""} 
+                author={(msg.author===user?.username)?"you":msg.author}
+                profilePic={msg.author.charAt(0).toUpperCase()}
+                >
                   {msg.content}
                   </Message>
             }
@@ -225,7 +259,7 @@ let ChatApp = ({user,logout,PK, axiosAuth}:{user: user,logout: ()=>void,PK: stri
         </section>
         <form className='flex w-[60%] px-2' onSubmit={(ev)=>{ev.preventDefault();sendMessage(typedMessage)}}>
           <input value={typedMessage} onChange={handlleUserTyping} className='input w-full' type="text" placeholder='type message' />
-          <button type={"submit"}  className='btn h-full ml-2'><img className='' src={SendIcon} alt="" /></button>
+          <button type={"submit"}  className='btn ml-2'><img className='py-2' src={SendIcon} alt="" /></button>
         </form>
       </div>
       </>

@@ -27,7 +27,7 @@ code {
 }
 
 .btn {
-@apply  grid content-center h-fit p-1 cursor-pointer bg-gray-200 px-6 text-gray-200 bg-opacity-20 border-blue-400 hover:bg-opacity-40 rounded-sm  w-fit  focus:outline-none 
+@apply  focus:scale-95 focus:border-l-4 grid content-center h-fit p-1 cursor-pointer bg-gray-200 px-6 text-gray-200 bg-opacity-20 border-blue-400 hover:bg-opacity-40 rounded-sm  w-fit  focus:outline-none 
 }
 
 

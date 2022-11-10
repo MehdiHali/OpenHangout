@@ -41,7 +41,7 @@ let LoginPage = ({user, err, login, signup}:{
           <input onChange={handleUsernameChange} className='input w-full' type="text"  placeholder='username' />
           <input onChange={handlePasswordChange} className='input w-full' type="password" placeholder='password' />
           <small className="bg-orange-400 bg-opacity-20">If you are new please click on signup and your account will be created immediately.</small>
-          <div className='felx space-x-2'> 
+          <div className='flex space-x-2'> 
             <button className='btn' onClick={handleLogin}>Login </button>
             <span className='text-white'></span>
             <button className='btn' onClick={handleSignup}>SignUp</button>
